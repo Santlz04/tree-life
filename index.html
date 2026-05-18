@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tree Life · Panel de Administración</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-layout">
+
+    <div class="auth-hero">
+      <div class="hero-logo">🌳</div>
+      <h1 class="hero-title">Tree Life</h1>
+      <p class="hero-subtitle">Panel de Administración</p>
+
+      <div class="hero-features">
+        <div class="hero-feature">
+          <span class="hero-feature-icon">🌿</span>
+          <span>Gestiona el inventario completo de árboles</span>
+        </div>
+        <div class="hero-feature">
+          <span class="hero-feature-icon">👥</span>
+          <span>Administra alumnos y sus adopciones</span>
+        </div>
+        <div class="hero-feature">
+          <span class="hero-feature-icon">📊</span>
+          <span>Monitorea servicios y mediciones</span>
+        </div>
+        <div class="hero-feature">
+          <span class="hero-feature-icon">🔔</span>
+          <span>Gestiona campañas de plantación</span>
+        </div>
+      </div>
+
+      <p class="hero-footer">ITCM · TecNM · Ciudad Madero · 2026</p>
+    </div>
+
+    <div class="auth-panel">
+
+      <div id="view-login" class="auth-view auth-panel-inner">
+        <div class="auth-badge">🔒 Acceso seguro</div>
+        <h2 class="auth-heading">Bienvenido de vuelta</h2>
+        <p class="auth-sub">Ingresa tus credenciales para acceder al panel de administración.</p>
+
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <div class="input-wrap">
+            <span class="input-icon">📧</span>
+            <input id="login-email" class="form-input" type="email" placeholder="correo@itcm.edu.mx" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input id="login-pwd" class="form-input" type="password" placeholder="••••••••" />
+            <button class="pass-toggle" onclick="togglePwd('login-pwd',this)">👁</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="handleLogin()">Iniciar sesión</button>
+
+        <div class="auth-links">
+          <a href="#" onclick="navigate('forgot')">¿Olvidaste tu contraseña?</a>
+          <a href="#" class="link-create" onclick="navigate('register-1')">Crear cuenta</a>
+        </div>
+      </div>
+
+      <div id="view-forgot" class="auth-view auth-panel-inner" style="display:none">
+        <a class="auth-back" href="#" onclick="navigate('login')">← Volver al inicio de sesión</a>
+        <div class="auth-badge">🔑 Recuperar acceso</div>
+        <h2 class="auth-heading">¿Olvidaste tu contraseña?</h2>
+        <p class="auth-sub">Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
+
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <div class="input-wrap">
+            <span class="input-icon">📧</span>
+            <input id="forgot-email" class="form-input" type="email" placeholder="correo@itcm.edu.mx" />
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="handleForgot()">Enviar enlace de recuperación</button>
+
+        <div class="auth-links" style="justify-content:center; margin-top:12px">
+          <a href="#" onclick="navigate('login')">Recordé mi contraseña — Iniciar sesión →</a>
+        </div>
+      </div>
+
+      <div id="view-register-1" class="auth-view auth-panel-inner" style="display:none">
+        <a class="auth-back" href="#" onclick="navigate('login')">← Volver al inicio de sesión</a>
+        <div class="auth-badge">🌱 Nueva cuenta</div>
+        <h2 class="auth-heading">Crear cuenta</h2>
+        <p class="auth-sub">Completa el formulario para registrarte como administrador.</p>
+
+        <div class="step-bar">
+          <span class="active"></span>
+          <span></span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre(s)</label>
+            <div class="input-wrap">
+              <span class="input-icon">👤</span>
+              <input id="reg-nombres" class="form-input" type="text" placeholder="Ej: Ana" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apellido Paterno</label>
+            <div class="input-wrap">
+              <span class="input-icon">👤</span>
+              <input id="reg-ap" class="form-input" type="text" placeholder="Ej: García" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Apellido Materno</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input id="reg-am" class="form-input" type="text" placeholder="Ej: López" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <div class="input-wrap">
+            <span class="input-icon">📧</span>
+            <input id="reg-email" class="form-input" type="email" placeholder="correo@itcm.edu.mx" />
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="handleRegister1()">Continuar →</button>
+      </div>
+
+      <div id="view-register-2" class="auth-view auth-panel-inner" style="display:none">
+        <a class="auth-back" href="#" onclick="navigate('login')">← Volver al inicio de sesión</a>
+        <div class="auth-badge">🌱 Nueva cuenta</div>
+        <h2 class="auth-heading">Crear cuenta</h2>
+        <p class="auth-sub">Completa el formulario para registrarte como administrador.</p>
+
+        <div class="step-bar">
+          <span></span>
+          <span class="active"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input id="reg-pwd" class="form-input" type="password" placeholder="Mínimo 8 caracteres" />
+            <button class="pass-toggle" onclick="togglePwd('reg-pwd',this)">👁</button>
+          </div>
+          <div class="pwd-strength">
+            <div class="pwd-strength-bar"></div>
+            <div class="pwd-strength-bar"></div>
+            <div class="pwd-strength-bar"></div>
+            <div class="pwd-strength-bar"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirmar contraseña</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input id="reg-pwd2" class="form-input" type="password" placeholder="Repite tu contraseña" />
+            <button class="pass-toggle" onclick="togglePwd('reg-pwd2',this)">👁</button>
+          </div>
+        </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="reg-terms" />
+          Acepto los <a href="#">términos de uso</a> y la política de privacidad de Tree Life.
+        </label>
+
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="navigate('register-1')">← Atrás</button>
+          <button class="btn-primary" onclick="handleRegister2()">Crear cuenta</button>
+        </div>
+      </div>
+
+    </div></div></div><div id="dashboard-screen" class="dashboard-layout hidden">
+
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-brand-icon">🌳</span> Tree Life
+    </div>
+    <div class="nav-tabs">
+      <button id="tab-trees" class="nav-tab active-tree" onclick="showPage('trees')">
+        🌿 Árboles
+      </button>
+      <button id="tab-users" class="nav-tab" onclick="showPage('users')">
+        👥 Usuarios
+      </button>
+    </div>
+    <div class="nav-right">
+      <div class="user-chip" onclick="toggleUserMenu()">
+        <div class="user-avatar" id="nav-avatar">AD</div>
+        <span id="nav-name">Administrador</span>
+      </div>
+<div class="user-dropdown">
+        <a href="#" onclick="openProfileModal()">👤 Mi perfil</a>
+        <a href="#" onclick="openSettingsModal()">⚙️ Configuración</a>
+        <hr />
+        <a href="#" class="danger" onclick="logout()">🚪 Cerrar sesión</a>
+      </div>
+    </div>
+  </nav>
+
+  <div id="page-trees" class="page active">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Gestión de Árboles</h1>
+        <p class="page-sub">Administra el inventario completo de árboles registrados</p>
+      </div>
+      <button class="btn-add" onclick="openTreeModal()">+ Agregar árbol</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="tree-search" class="search-input" type="text" placeholder="Buscar por nombre, especie o ubicación..." />
+      </div>
+      <select id="tree-status-filter" class="filter-select">
+        <option value="all">Todos los estados</option>
+        <option value="vivo">Vivo</option>
+        <option value="muerto">Muerto</option>
+      </select>
+    </div>
+
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Árbol</th>
+            <th>Valor</th>
+            <th>Edad</th>
+            <th>Altura</th>
+            <th>Diámetro</th>
+            <th>Ubicación</th>
+            <th>Estado</th>
+            <th>Plantación</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tree-tbody"></tbody>
+      </table>
+      <div class="table-footer">
+        <span id="tree-count"></span>
+        <div id="tree-pagination" class="pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-users" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Gestión de Usuarios</h1>
+        <p class="page-sub">Administra alumnos y administradores del sistema</p>
+      </div>
+      <button class="btn-add" onclick="openUserModal()">+ Agregar usuario</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="user-search" class="search-input" type="text" placeholder="Buscar por nombre o correo..." />
+      </div>
+      <select id="user-role-filter" class="filter-select">
+        <option value="all">Todos los roles</option>
+        <option value="alumno">Alumno</option>
+        <option value="administrador">Administrador</option>
+      </select>
+    </div>
+
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Árboles a cargo</th>
+            <th>Fecha Adopción</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="user-tbody"></tbody>
+      </table>
+      <div class="table-footer">
+        <span id="user-count"></span>
+        <div id="user-pagination" class="pagination"></div>
+      </div>
+    </div>
+  </div>
+
+<div id="modal-tree" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-tree-title">🌿 Agregar árbol</div>
+      <button class="modal-close" onclick="closeTreeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre común</label>
+          <input id="tree-nombre" class="form-input no-icon" type="text" placeholder="Ej: Cedro" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre científico</label>
+          <input id="tree-cientifico" class="form-input no-icon" type="text" placeholder="Ej: Cedrela odorata" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Valor / Virtud</label>
+          <input id="tree-valor" class="form-input no-icon" type="text" placeholder="Ej: Gratitud" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select id="tree-estado" class="form-select">
+            <option value="Vivo">Vivo</option>
+            <option value="Muerto">Muerto</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+      <div class="form-group">
+          <label class="form-label">Altura actual (m)</label>
+          <input id="tree-altura" class="form-input no-icon" type="number" step="0.1" placeholder="Ej: 1.20" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diámetro actual (cm)</label>
+          <input id="tree-diametro" class="form-input no-icon" type="number" step="0.1" placeholder="Ej: 10.5" />
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha de plantación</label>
+          <div class="input-wrap">
+          
+            <input id="tree-plantacion" class="form-input" type="date" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Especie (ID)</label>
+          <div class="input-wrap">
+            <input id="tree-especie" class="form-input" type="number" placeholder="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Ubicación</label>
+        <input id="tree-ubicacion" class="form-input no-icon" type="text" placeholder="Calle, colonia, ciudad" />
+      </div>
+      
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeTreeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveTree()">Guardar árbol</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-detail" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detail-nombre">Detalle del árbol</div>
+      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Nombre científico</div>
+          <div class="detail-value" id="detail-cientifico"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Valor / Virtud</div>
+          <div class="detail-value" id="detail-valor"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Estado</div>
+          <div class="detail-value" id="detail-estado"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Fecha de plantación</div>
+          <div class="detail-value" id="detail-plantacion"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Altura</div>
+          <div class="detail-value" id="detail-altura"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Diámetro</div>
+          <div class="detail-value" id="detail-diametro"></div>
+        </div>
+        <div class="detail-item detail-full">
+          <div class="detail-label">Ubicación</div>
+          <div class="detail-value" id="detail-ubicacion"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeDetailModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-user" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-user-title">👤 Agregar usuario</div>
+      <button class="modal-close" onclick="closeUserModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre(s)</label>
+          <input id="user-nombres" class="form-input no-icon" type="text" placeholder="Danna Paola" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido Paterno</label>
+          <input id="user-ap" class="form-input no-icon" type="text" placeholder="Araujo" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Apellido Materno</label>
+          <input id="user-am" class="form-input no-icon" type="text" placeholder="Ramiro" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rol</label>
+          <select id="user-rol" class="form-select">
+            <option value="Alumno">Alumno</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input id="user-correo" class="form-input no-icon" type="email" placeholder="correo@ejemplo.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input id="user-password" class="form-input no-icon" type="password" placeholder="••••••••" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeUserModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveUser()">Guardar usuario</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-profile" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Mi perfil</div>
+      <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    </div>
+    <div class="modal-body text-center">
+      <div class="user-avatar" id="profile-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 16px;">SL</div>
+      <h3 id="profile-name" style="margin-bottom: 4px; color: var(--text-dark);">Cargando...</h3>
+      <p id="profile-email" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">cargando@correo.com</p>
+      
+      <div class="detail-grid" style="text-align: left;">
+        <div class="detail-item">
+          <div class="detail-label">Rol en el sistema</div>
+          <div class="detail-value" id="profile-role">Administrador</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Miembro desde</div>
+          <div class="detail-value">Hoy</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeProfileModal()">Cerrar</button>
+      <button class="btn-save" onclick="showToast('Perfil actualizado ✅'); closeProfileModal();">Editar perfil</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-settings" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ Configuración del sistema</div>
+      <button class="modal-close" onclick="closeSettingsModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <h4 style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-muted);">Notificaciones</h4>
+      
+      <label class="checkbox-label" style="margin-bottom: 16px; font-size: 1rem; color: var(--text-dark);">
+        <input type="checkbox" checked />
+        Recibir correos sobre nuevas adopciones
+      </label>
+      
+      <label class="checkbox-label" style="margin-bottom: 24px; font-size: 1rem; color: var(--text-dark);">
+        <input type="checkbox" checked />
+        Alertas críticas (árboles en estado "Muerto")
+      </label>
+
+      <h4 style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-muted);">Apariencia</h4>
+      
+      <label class="checkbox-label" style="font-size: 1rem; color: var(--text-dark);">
+        <input type="checkbox" />
+        Modo oscuro (Próximamente)
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSettingsModal()">Cancelar</button>
+      <button class="btn-save" onclick="showToast('Preferencias guardadas ⚙️'); closeSettingsModal();">Guardar ajustes</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="app.js"></script>
+
+<script>
+  const _nav = navigate;
+  window.navigate = function(view) {
+    document.querySelectorAll('.auth-view').forEach(v => v.style.display = 'none');
+    const el = document.getElementById('view-' + view);
+    if (el) el.style.display = 'block';
+    state.authView = view;
+  };
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    window.navigate('login');
+  });
+</script>
+
+</body>
+</html>
