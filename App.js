@@ -21,22 +21,33 @@ async function cargarArboles() {
 }
 async function cargarUsuarios() {
   try {
-    // Trae usuarios junto con su asignación (si existe)
-    const { data, error } = await sb
+    // Trae usuarios
+    const { data: usuariosData, error: errorUsuarios } = await sb
       .from('usuario')
-      .select(`
-        id_usuario, nombre, apellido_paterno, apellido_materno, correo, tipo,
-        asignacion (
-          numero_arbol,
-          fecha_asignacion,
-          arbol:numero_arbol ( nombre )
-        )
-      `);
+      .select('id_usuario, nombre, apellido_paterno, apellido_materno, correo, tipo');
 
-    if (error) throw error;
+    if (errorUsuarios) throw errorUsuarios;
 
-    usuarios = data.map(u => {
-      const asig = u.asignacion?.[0] || null;
+    // Trae todas las asignaciones alumno_arbol con nombre del árbol
+    const { data: asignaciones, error: errorAsig } = await sb
+      .from('alumno_arbol')
+      .select('id_usuario, numero_arbol, fecha_adopcion_inicio');
+
+    if (errorAsig) throw errorAsig;
+
+    // Trae nombres de árboles para mostrar
+    const { data: arbolesData } = await sb
+      .from('vista_arboles_completa')
+      .select('id, nombre');
+
+    const arbolMap = {};
+    (arbolesData || []).forEach(a => { arbolMap[a.id] = a.nombre; });
+
+    const asigMap = {};
+    (asignaciones || []).forEach(a => { asigMap[a.id_usuario] = a; });
+
+    usuarios = usuariosData.map(u => {
+      const asig = asigMap[u.id_usuario] || null;
       return {
         id: u.id_usuario,
         nombres: u.nombre,
@@ -45,9 +56,9 @@ async function cargarUsuarios() {
         correo: u.correo,
         rol: u.tipo.charAt(0).toUpperCase() + u.tipo.slice(1),
         arboles: asig ? 1 : 0,
-        arbol_nombre: asig?.arbol?.nombre || null,
+        arbol_nombre: asig ? (arbolMap[asig.numero_arbol] || `#${asig.numero_arbol}`) : null,
         arbol_asignado: asig?.numero_arbol || '',
-        fecha: asig?.fecha_asignacion || '—',
+        fecha: asig?.fecha_adopcion_inicio || '—',
         color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0')
       };
     });
@@ -593,12 +604,15 @@ async function saveUser() {
 
 async function guardarAsignacion(usuarioId, arbolId) {
   try {
-    // Upsert: si ya existe una asignación para este usuario, la actualiza
-    const { error } = await sb.from('asignacion').upsert({
+    // Eliminar asignación anterior si existe
+    await sb.from('alumno_arbol').delete().eq('id_usuario', usuarioId);
+
+    // Insertar nueva asignación
+    const { error } = await sb.from('alumno_arbol').insert({
       id_usuario: usuarioId,
       numero_arbol: parseInt(arbolId),
-      fecha_asignacion: new Date().toISOString().split('T')[0]
-    }, { onConflict: 'id_usuario' });
+      fecha_adopcion_inicio: new Date().toISOString().split('T')[0]
+    });
 
     if (error) throw error;
   } catch (err) {
@@ -609,7 +623,7 @@ async function guardarAsignacion(usuarioId, arbolId) {
 
 async function eliminarAsignacion(usuarioId) {
   try {
-    await sb.from('asignacion').delete().eq('id_usuario', usuarioId);
+    await sb.from('alumno_arbol').delete().eq('id_usuario', usuarioId);
   } catch (err) {
     console.error('Error al eliminar asignación:', err);
   }
