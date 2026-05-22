@@ -719,6 +719,107 @@ input, select, textarea { font-family: var(--font-body); font-size: 1rem; }
 .hidden { display: none !important; }
 .text-center { text-align: center; }
 
+/* ─── Modal ancho para detalle árbol ─── */
+.modal-wide { max-width: 680px; }
+
+/* ─── Sección de Mediciones ─── */
+.medicion-section {
+  margin-top: 24px;
+  border-top: 1.5px solid #f0ede7;
+  padding-top: 20px;
+}
+.medicion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.medicion-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.medicion-icon { font-size: 1.2rem; }
+.medicion-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+.btn-medicion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background: var(--forest);
+  color: var(--white);
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-medicion:hover { background: var(--forest-mid); }
+
+.form-medicion {
+  background: #f8f6f2;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1.5px solid #e8e4dc;
+}
+
+.medicion-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #f0ede7; }
+.medicion-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+.medicion-table th {
+  background: #f0ede7;
+  padding: 9px 14px;
+  text-align: left;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.medicion-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f5f2ed;
+  vertical-align: middle;
+}
+.medicion-table tr:last-child td { border-bottom: none; }
+.medicion-table tr:hover td { background: #faf8f5; }
+
+/* ─── Sección asignación de árbol ─── */
+.asignacion-section {
+  margin-top: 4px;
+  padding: 14px 16px;
+  background: #f0f7f0;
+  border-radius: 10px;
+  border: 1.5px solid #c8e0c8;
+}
+.asignacion-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+.asignacion-label {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+.asignacion-hint {
+  font-size: .75rem;
+  color: var(--text-muted);
+  margin-top: 7px;
+}
+
 
 @media (max-width: 900px) {
   .auth-layout { grid-template-columns: 1fr; }

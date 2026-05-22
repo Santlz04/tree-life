@@ -21,22 +21,36 @@ async function cargarArboles() {
 }
 async function cargarUsuarios() {
   try {
+    // Trae usuarios junto con su asignación (si existe)
     const { data, error } = await sb
       .from('usuario')
-      .select('id_usuario, nombre, apellido_paterno, apellido_materno, correo, tipo');
+      .select(`
+        id_usuario, nombre, apellido_paterno, apellido_materno, correo, tipo,
+        asignacion (
+          numero_arbol,
+          fecha_asignacion,
+          arbol:numero_arbol ( nombre )
+        )
+      `);
 
     if (error) throw error;
-    usuarios = data.map(u => ({
-      id: u.id_usuario,
-      nombres: u.nombre,
-      ap: u.apellido_paterno,
-      am: u.apellido_materno || '',
-      correo: u.correo,
-      rol: u.tipo.charAt(0).toUpperCase() + u.tipo.slice(1), 
-      arboles: 0,
-      fecha: '---', 
-      color: '#' + Math.floor(Math.random()*16777215).toString(16)
-    }));
+
+    usuarios = data.map(u => {
+      const asig = u.asignacion?.[0] || null;
+      return {
+        id: u.id_usuario,
+        nombres: u.nombre,
+        ap: u.apellido_paterno,
+        am: u.apellido_materno || '',
+        correo: u.correo,
+        rol: u.tipo.charAt(0).toUpperCase() + u.tipo.slice(1),
+        arboles: asig ? 1 : 0,
+        arbol_nombre: asig?.arbol?.nombre || null,
+        arbol_asignado: asig?.numero_arbol || '',
+        fecha: asig?.fecha_asignacion || '—',
+        color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0')
+      };
+    });
     renderUsers();
   } catch (error) {
     console.error('Error al cargar usuarios:', error);
@@ -204,7 +218,10 @@ function renderUsers() {
             </div>
           </td>
           <td><span class="badge ${rolClass}">${u.rol}</span></td>
-          <td>${u.arboles} ${u.arboles===1?'árbol':'árboles'}</td>
+          <td>${u.arboles > 0
+            ? `<span class="badge badge-valor">🌿 ${u.arbol_nombre || u.arboles + ' árbol'}</span>`
+            : `<span style="color:var(--text-muted);font-size:.82rem">Sin árbol</span>`
+          }</td>
           <td>${u.fecha}</td>
           <td>
             <div class="action-btns">
@@ -302,20 +319,113 @@ async function saveTree() {
   }
 }
 
+let currentTreeId = null;
+
 function viewTree(id) {
   const a = arboles.find(t => t.id === id);
   if (!a) return;
+  currentTreeId = id;
+
   document.getElementById('detail-nombre').textContent = `${a.icono} #${String(a.id).padStart(4,'0')} ${a.nombre}`;
   document.getElementById('detail-cientifico').textContent = a.cientifico;
   document.getElementById('detail-valor').textContent    = a.valor;
   document.getElementById('detail-estado').textContent   = a.estado;
-  document.getElementById('detail-altura').textContent   = a.altura + ' m';
-  document.getElementById('detail-diametro').textContent = a.diametro + ' cm';
   document.getElementById('detail-plantacion').textContent = a.plantacion;
   document.getElementById('detail-ubicacion').textContent = a.ubicacion;
+
+  // Ocultar form de nueva medición
+  document.getElementById('form-medicion').classList.add('hidden');
+
   document.getElementById('modal-detail').classList.add('show');
+  cargarMediciones(id);
 }
-function closeDetailModal() { document.getElementById('modal-detail').classList.remove('show'); }
+
+function closeDetailModal() {
+  document.getElementById('modal-detail').classList.remove('show');
+  currentTreeId = null;
+}
+
+// ─── MEDICIONES ────────────────────────────────────────────────────────────────
+
+async function cargarMediciones(arbolId) {
+  const tbody = document.getElementById('medicion-tbody');
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">Cargando...</td></tr>`;
+  try {
+    const { data, error } = await sb
+      .from('medicion_arbol')
+      .select('*')
+      .eq('numero_arbol', arbolId)
+      .order('fecha_medicion', { ascending: false });
+
+    if (error) throw error;
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state" style="padding:24px 0"><div class="empty-icon" style="font-size:1.8rem">📏</div><p>Sin mediciones registradas</p></div></td></tr>`;
+    } else {
+      tbody.innerHTML = data.map(m => `
+        <tr>
+          <td><strong>${m.fecha_medicion}</strong></td>
+          <td>${m.altura} m</td>
+          <td>${m.diametro} cm</td>
+          <td>${m.observaciones || '—'}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    console.error('Error al cargar mediciones:', err);
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:16px">Error al cargar mediciones</td></tr>`;
+  }
+}
+
+function toggleFormMedicion() {
+  document.getElementById('form-medicion').classList.toggle('hidden');
+  // Poner fecha de hoy por defecto
+  const fechaInput = document.getElementById('med-fecha');
+  if (!fechaInput.value) {
+    fechaInput.value = new Date().toISOString().split('T')[0];
+  }
+}
+
+async function guardarMedicion() {
+  const altura       = parseFloat(document.getElementById('med-altura').value);
+  const diametro     = parseFloat(document.getElementById('med-diametro').value);
+  const fecha        = document.getElementById('med-fecha').value;
+  const observaciones= document.getElementById('med-observaciones').value.trim();
+
+  if (!altura || !diametro || !fecha) {
+    showToast('Completa altura, diámetro y fecha', 'error');
+    return;
+  }
+  if (!currentTreeId) return;
+
+  try {
+    const { error } = await sb.from('medicion_arbol').insert({
+      numero_arbol: currentTreeId,
+      altura,
+      diametro,
+      fecha_medicion: fecha,
+      observaciones: observaciones || null
+    });
+
+    if (error) throw error;
+
+    // Limpiar form
+    document.getElementById('med-altura').value = '';
+    document.getElementById('med-diametro').value = '';
+    document.getElementById('med-fecha').value = '';
+    document.getElementById('med-observaciones').value = '';
+    document.getElementById('form-medicion').classList.add('hidden');
+
+    showToast('Medición registrada ✅');
+    cargarMediciones(currentTreeId);
+
+  } catch (err) {
+    console.error('Error al guardar medición:', err);
+    showToast('No se pudo guardar la medición', 'error');
+  }
+}
+
+// ─── FIN MEDICIONES ─────────────────────────────────────────────────────────
 
 async function deleteTree(id) {
   
@@ -348,17 +458,63 @@ function openUserModal(id = null) {
   document.getElementById('user-correo').value   = u?.correo  || '';
   document.getElementById('user-rol').value      = u?.rol     || 'Alumno';
   document.getElementById('user-password').value = '';
+
+  // Mostrar/ocultar sección asignación según rol
+  const rol = u?.rol || 'Alumno';
+  toggleAsignacionSection(rol);
+
+  // Cargar árboles disponibles en el selector
+  cargarArbolesParaAsignar(u?.arbol_asignado || '');
+
   document.getElementById('modal-user').classList.add('show');
+
+  // Listener para mostrar/ocultar asignación al cambiar rol
+  document.getElementById('user-rol').onchange = (e) => toggleAsignacionSection(e.target.value);
 }
 function closeUserModal() { document.getElementById('modal-user').classList.remove('show'); }
 
-function saveUser() {
+// ─── ASIGNACIÓN DE ÁRBOL ───────────────────────────────────────────────────────
+
+function toggleAsignacionSection(rol) {
+  const section = document.getElementById('asignacion-section');
+  if (rol === 'Alumno' || rol === 'alumno') {
+    section.style.display = 'block';
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+async function cargarArbolesParaAsignar(arbolSeleccionado = '') {
+  const select = document.getElementById('user-arbol');
+  select.innerHTML = '<option value="">— Sin árbol asignado —</option>';
+  try {
+    const { data, error } = await sb
+      .from('vista_arboles_completa')
+      .select('id, nombre, cientifico')
+      .eq('estado', 'Vivo');
+
+    if (error) throw error;
+
+    data.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `#${String(a.id).padStart(4,'0')} ${a.nombre} (${a.cientifico})`;
+      if (String(a.id) === String(arbolSeleccionado)) opt.selected = true;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Error al cargar árboles para asignar:', err);
+  }
+}
+
+async function saveUser() {
   const nombres = document.getElementById('user-nombres').value.trim();
   const ap      = document.getElementById('user-ap').value.trim();
   const am      = document.getElementById('user-am').value.trim();
   const correo  = document.getElementById('user-correo').value.trim();
   const rol     = document.getElementById('user-rol').value;
   const pwd     = document.getElementById('user-password').value;
+  const arbolId = document.getElementById('user-arbol').value;
 
   if (!nombres || !ap || !correo) { showToast('Completa los campos obligatorios', 'error'); return; }
 
@@ -369,16 +525,97 @@ function saveUser() {
   const fecha = `${String(today.getDate()).padStart(2,'0')} ${months[today.getMonth()]} ${today.getFullYear()}`;
 
   if (state.editingUser) {
+    // Editar usuario existente
     const idx = usuarios.findIndex(u => u.id === state.editingUser);
-    if (idx >= 0) { usuarios[idx] = { ...usuarios[idx], nombres, ap, am, correo, rol }; showToast('Usuario actualizado ✅'); }
+    if (idx >= 0) {
+      usuarios[idx] = { ...usuarios[idx], nombres, ap, am, correo, rol, arbol_asignado: arbolId || '' };
+
+      // Guardar asignación en Supabase si es alumno
+      if (rol === 'Alumno' && arbolId) {
+        await guardarAsignacion(state.editingUser, arbolId);
+      } else if (rol === 'Alumno' && !arbolId) {
+        await eliminarAsignacion(state.editingUser);
+      }
+
+      showToast('Usuario actualizado ✅');
+    }
   } else {
-    usuarios.push({ id:'u'+(Date.now()), nombres, ap, am, correo, rol, arboles:0, fecha, color:randomColor });
-    showToast('Usuario creado correctamente ✅');
+    // Nuevo usuario
+    try {
+      const { data, error } = await sb.rpc('agregar_usuario_sistema', {
+        p_nombres: nombres,
+        p_ap_paterno: ap,
+        p_ap_materno: am || '',
+        p_correo: correo,
+        p_password: pwd || 'temporal123',
+        p_rol: rol.toLowerCase()
+      });
+
+      if (error) {
+        if (error.code === '23505') {
+          showToast('Este correo ya está registrado', 'error');
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      // Recargar usuarios para obtener el id real
+      await cargarUsuarios();
+
+      // Si es alumno y tiene árbol asignado, buscar el id del usuario recién creado
+      if (rol === 'Alumno' && arbolId) {
+        const { data: nuevoUser } = await sb
+          .from('usuario')
+          .select('id_usuario')
+          .eq('correo', correo)
+          .single();
+
+        if (nuevoUser) {
+          await guardarAsignacion(nuevoUser.id_usuario, arbolId);
+        }
+      }
+
+      showToast('Usuario creado correctamente ✅');
+      closeUserModal();
+      return;
+
+    } catch (err) {
+      console.error('Error al guardar usuario:', err);
+      showToast('Error al guardar el usuario', 'error');
+      return;
+    }
   }
 
   closeUserModal();
   renderUsers();
 }
+
+async function guardarAsignacion(usuarioId, arbolId) {
+  try {
+    // Upsert: si ya existe una asignación para este usuario, la actualiza
+    const { error } = await sb.from('asignacion').upsert({
+      id_usuario: usuarioId,
+      numero_arbol: parseInt(arbolId),
+      fecha_asignacion: new Date().toISOString().split('T')[0]
+    }, { onConflict: 'id_usuario' });
+
+    if (error) throw error;
+  } catch (err) {
+    console.error('Error al guardar asignación:', err);
+    showToast('No se pudo guardar la asignación del árbol', 'error');
+  }
+}
+
+async function eliminarAsignacion(usuarioId) {
+  try {
+    await sb.from('asignacion').delete().eq('id_usuario', usuarioId);
+  } catch (err) {
+    console.error('Error al eliminar asignación:', err);
+  }
+}
+
+// ─── FIN ASIGNACIÓN ───────────────────────────────────────────────────────────
 
 function deleteUser(id) {
   if (!confirm('¿Eliminar este usuario?')) return;

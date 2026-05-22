@@ -370,7 +370,7 @@
 </div>
 
 <div id="modal-detail" class="modal-overlay">
-  <div class="modal">
+  <div class="modal modal-wide">
     <div class="modal-header">
       <div class="modal-title" id="detail-nombre">Detalle del árbol</div>
       <button class="modal-close" onclick="closeDetailModal()">✕</button>
@@ -393,19 +393,68 @@
           <div class="detail-label">Fecha de plantación</div>
           <div class="detail-value" id="detail-plantacion"></div>
         </div>
-        <div class="detail-item">
-          <div class="detail-label">Altura</div>
-          <div class="detail-value" id="detail-altura"></div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label">Diámetro</div>
-          <div class="detail-value" id="detail-diametro"></div>
-        </div>
         <div class="detail-item detail-full">
           <div class="detail-label">Ubicación</div>
           <div class="detail-value" id="detail-ubicacion"></div>
         </div>
       </div>
+
+      <!-- SECCIÓN DE MEDICIONES -->
+      <div class="medicion-section">
+        <div class="medicion-header">
+          <div class="medicion-header-left">
+            <span class="medicion-icon">📏</span>
+            <h4 class="medicion-title">Historial de Mediciones</h4>
+          </div>
+          <button class="btn-medicion" onclick="toggleFormMedicion()">+ Nueva medición</button>
+        </div>
+
+        <!-- Formulario nueva medición (oculto por defecto) -->
+        <div id="form-medicion" class="form-medicion hidden">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Altura (m)</label>
+              <input id="med-altura" class="form-input no-icon" type="number" step="0.01" placeholder="Ej: 2.50" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Diámetro (cm)</label>
+              <input id="med-diametro" class="form-input no-icon" type="number" step="0.01" placeholder="Ej: 12.5" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Fecha de medición</label>
+              <input id="med-fecha" class="form-input no-icon" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Observaciones</label>
+              <input id="med-observaciones" class="form-input no-icon" type="text" placeholder="Opcional" />
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
+            <button class="btn-cancel" onclick="toggleFormMedicion()">Cancelar</button>
+            <button class="btn-save" onclick="guardarMedicion()">Guardar medición</button>
+          </div>
+        </div>
+
+        <!-- Tabla historial -->
+        <div class="medicion-table-wrap">
+          <table class="medicion-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Altura</th>
+                <th>Diámetro</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody id="medicion-tbody">
+              <tr><td colspan="4"><div class="empty-state" style="padding:24px 0"><div class="empty-icon" style="font-size:1.8rem">📏</div><p>Sin mediciones registradas</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeDetailModal()">Cerrar</button>
@@ -450,6 +499,17 @@
       <div class="form-group">
         <label class="form-label">Contraseña</label>
         <input id="user-password" class="form-input no-icon" type="password" placeholder="••••••••" />
+      </div>
+      <!-- ASIGNACIÓN DE ÁRBOL (solo visible para alumnos) -->
+      <div id="asignacion-section" class="asignacion-section">
+        <div class="asignacion-header">
+          <span>🌿</span>
+          <span class="asignacion-label">Árbol asignado</span>
+        </div>
+        <select id="user-arbol" class="form-select">
+          <option value="">— Sin árbol asignado —</option>
+        </select>
+        <p class="asignacion-hint">Solo los alumnos pueden tener un árbol a cargo.</p>
       </div>
     </div>
     <div class="modal-footer">
